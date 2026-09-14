@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  "name": "japan-mensa-monitor",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-14",
+
+  "workers_dev": true,
+
+  "triggers": {
+    "crons": [
+      "* * * * *"
+    ]
+  },
+
+  "kv_namespaces": [
+    {
+      "binding": "MENSA_KV",
+      "id": "a25e5ff79a522b331568f45ec50c8dc"
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}
