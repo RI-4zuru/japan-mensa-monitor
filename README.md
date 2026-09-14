@@ -1,0 +1,1 @@
+# japan-mensa-monitor
