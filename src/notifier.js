@@ -3,79 +3,85 @@ export async function sendNtfy(
   payload
 ) {
 
-  if (!env.NTFY_TOPIC) {
+  if (!env.TELEGRAM_BOT_TOKEN) {
     throw new Error(
-      "NTFY_TOPIC secret is not configured"
+      "TELEGRAM_BOT_TOKEN is not configured"
     );
   }
 
-  const headers = {
-    "Content-Type":
-      "application/json; charset=utf-8",
-  };
-
-  if (env.NTFY_TOKEN) {
-    headers.Authorization =
-      `Bearer ${env.NTFY_TOKEN}`;
+  if (!env.TELEGRAM_CHAT_ID) {
+    throw new Error(
+      "TELEGRAM_CHAT_ID is not configured"
+    );
   }
 
+  const apiUrl =
+    "https://api.telegram.org/bot" +
+    env.TELEGRAM_BOT_TOKEN +
+    "/sendMessage";
+
+  const text = [
+    payload.title || "",
+    "",
+    payload.message || ""
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   const body = {
-    topic: env.NTFY_TOPIC,
+    chat_id:
+      env.TELEGRAM_CHAT_ID,
 
-    title: payload.title,
+    text,
 
-    message: payload.message,
-
-    priority:
-      payload.priority ?? 3,
-
-    tags:
-      payload.tags ?? [],
-
-    click:
-      payload.click,
+    disable_notification:
+      false
   };
 
   if (payload.click) {
+    body.reply_markup = {
+      inline_keyboard: [
+        [
+          {
+            text:
+              payload.actionLabel ||
+              "開く",
 
-    body.actions = [
-      {
-        action: "view",
-
-        label:
-          payload.actionLabel || "開く",
-
-        url:
-          payload.click,
-
-        clear: true,
-      },
-    ];
+            url:
+              payload.click
+          }
+        ]
+      ]
+    };
   }
 
   const response =
     await fetch(
-      "https://ntfy.sh",
+      apiUrl,
       {
         method: "POST",
 
-        headers,
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
 
         body:
-          JSON.stringify(body),
+          JSON.stringify(body)
       }
     );
 
-  if (!response.ok) {
+  const result =
+    await response
+      .json()
+      .catch(() => null);
 
-    const detail =
-      await response
-        .text()
-        .catch(() => "");
-
+  if (!response.ok || !result?.ok) {
     throw new Error(
-      `ntfy error ${response.status}: ` +
-      detail.slice(0, 200)
+      "Telegram error " +
+      response.status +
+      ": " +
+      JSON.stringify(result)
     );
   }
 }
